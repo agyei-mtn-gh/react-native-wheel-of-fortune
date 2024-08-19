@@ -6,17 +6,63 @@ import {
   Animated,
   TouchableOpacity,
   Image,
+  Easing
 } from 'react-native';
 import * as d3Shape from 'd3-shape';
 
 import Svg, {G, Text, TSpan, Path, Pattern} from 'react-native-svg';
+import { Font } from './global';
+
+interface WheelOfFortuneProps {
+  options: {
+    rewards: string[];
+    winner?: number;
+    onRef: (ref: any) => void;
+    colors?: string[];
+    innerRadius?: number;
+    backgroundColor?: string;
+    borderWidth?: number;
+    borderColor?: string;
+    textColor?: string;
+    duration?: number;
+    knobSize?: number;
+    knobSource?: any;
+    getWinner?: (value: string, index: number) => void;
+    playButton: () => JSX.Element;
+  };
+}
+
+interface WheelOfFortuneState {
+  enabled: boolean;
+  started: boolean;
+  finished: boolean;
+  winner: string | null;
+  gameScreen: Animated.Value;
+  wheelOpacity: Animated.Value;
+  imageLeft: Animated.Value;
+  imageTop: Animated.Value;
+}
+
+const { width, height } = Dimensions.get('screen');
 
 const AnimatedSvg = Animated.createAnimatedComponent(Svg);
 
-const {width, height} = Dimensions.get('screen');
+class WheelOfFortune extends Component<WheelOfFortuneProps, WheelOfFortuneState> {
+  private angle: number = 0;
+  private numberOfSegments!: number;
+  private fontSize: number = 18;
+  private oneTurn: number = 360;
+  private angleBySegment!: number;
+  private angleOffset!: number;
+  private _wheelPaths: Array<{
+    path: string;
+    color: string;
+    value: string;
+    centroid: [number, number];
+  }> = [];
+  private _angle: Animated.Value = new Animated.Value(0);
 
-class WheelOfFortune extends Component {
-  constructor(props) {
+  constructor(props: WheelOfFortuneProps) {
     super(props);
     this.state = {
       enabled: false,
@@ -28,18 +74,12 @@ class WheelOfFortune extends Component {
       imageLeft: new Animated.Value(width / 2 - 30),
       imageTop: new Animated.Value(height / 2 - 70),
     };
-    this.angle = 0;
 
     this.prepareWheel();
   }
 
   prepareWheel = () => {
-    this.Rewards = this.props.options.rewards;
-    this.RewardCount = this.Rewards.length;
-
-    this.numberOfSegments = this.RewardCount;
-    this.fontSize = 20;
-    this.oneTurn = 360;
+    this.numberOfSegments = this.props.options.rewards.length;
     this.angleBySegment = this.oneTurn / this.numberOfSegments;
     this.angleOffset = this.angleBySegment / 2;
     this.winner = this.props.options.winner ?? Math.floor(Math.random() * this.numberOfSegments);
@@ -73,12 +113,8 @@ class WheelOfFortune extends Component {
   angleListener = () => {
     this._angle.addListener(event => {
       if (this.state.enabled) {
-        this.setState({
-          enabled: false,
-          finished: false,
-        });
+        this.setState({ enabled: false, finished: false });
       }
-
       this.angle = event.value;
     });
   };
@@ -92,32 +128,19 @@ class WheelOfFortune extends Component {
   }
 
   makeWheel = () => {
-    const data = Array.from({length: this.numberOfSegments}).fill(1);
+    const data = Array.from({ length: this.numberOfSegments }).fill(1);
     const arcs = d3Shape.pie()(data);
-    var colors = this.props.options.colors
-      ? this.props.options.colors
-      : [
-          '#E07026',
-          '#E8C22E',
-          '#ABC937',
-          '#4F991D',
-          '#22AFD3',
-          '#5858D0',
-          '#7B48C8',
-          '#D843B9',
-          '#E23B80',
-          '#D82B2B',
-        ];
+    const colors = this.props.options.colors || [
+      '#E07026', '#E8C22E', '#ABC937', '#4F991D', '#22AFD3',
+      '#5858D0', '#7B48C8', '#D843B9', '#E23B80', '#D82B2B',
+    ];
+
     return arcs.map((arc, index) => {
-      const instance = d3Shape
-        .arc()
-        .padAngle(0.01)
-        .outerRadius(width / 2)
-        .innerRadius(this.props.options.innerRadius || 100);
+      const instance = d3Shape.arc().padAngle(0.01).outerRadius(width / 2).innerRadius(this.props.options.innerRadius || 100);
       return {
-        path: instance(arc),
+        path: instance(arc)!,
         color: colors[index % colors.length],
-        value: this.Rewards[index],
+        value: this.props.options.rewards[index],
         centroid: instance.centroid(arc),
       };
     });
@@ -125,29 +148,23 @@ class WheelOfFortune extends Component {
 
   _getWinnerIndex = () => {
     const deg = Math.abs(Math.round(this.angle % this.oneTurn));
-    // wheel turning counterclockwise
     if (this.angle < 0) {
       return Math.floor(deg / this.angleBySegment);
     }
-    // wheel turning clockwise
-    return (
-      (this.numberOfSegments - Math.floor(deg / this.angleBySegment)) %
-      this.numberOfSegments
-    );
+    return (this.numberOfSegments - Math.floor(deg / this.angleBySegment)) % this.numberOfSegments;
   };
 
   _onPress = () => {
+    if (this.state.started || this.state.finished) return;
+
     const duration = this.props.options.duration || 10000;
 
-    this.setState({
-      started: true,
-    });
+    this.setState({ started: true, finished: false });
+
     Animated.timing(this._angle, {
-      toValue:
-        365 -
-        this.winner * (this.oneTurn / this.numberOfSegments) +
-        360 * (duration / 1000),
+      toValue: 365 - this.winner! * (this.oneTurn / this.numberOfSegments) + 360 * (duration / 1000),
       duration: duration,
+      easing: Easing.out(Easing.quad),
       useNativeDriver: true,
     }).start(() => {
       const winnerIndex = this._getWinnerIndex();
@@ -155,50 +172,57 @@ class WheelOfFortune extends Component {
         finished: true,
         winner: this._wheelPaths[winnerIndex].value,
       });
-      if (this.props.getWinner) {
-        this.props.getWinner(this._wheelPaths[winnerIndex].value, winnerIndex);
-      } else {
-        this.props.options?.getWinner?.(
-          this._wheelPaths[winnerIndex].value,
-          winnerIndex
-          );
+
+      if (this.props.options.getWinner) {
+        this.props.options.getWinner(this._wheelPaths[winnerIndex].value, winnerIndex);
       }
+
+      this.setState({ started: false });
     });
   };
 
-  _textRender = (x, y, number, i) => (
-    <Text
-      x={x - number.length * 5}
-      y={y - 80}
-      fill={
-        this.props.options.textColor ? this.props.options.textColor : '#fff'
-      }
-      textAnchor="middle"
-      fontSize={this.fontSize}>
-      {Array.from({length: number.length}).map((_, j) => {
-        // Render reward text vertically
-        if (this.props.options.textAngle === 'vertical') {
-          return (
-            <TSpan x={x} dy={this.fontSize} key={`arc-${i}-slice-${j}`}>
-              {number.charAt(j)}
-            </TSpan>
-          );
-        }
-        // Render reward text horizontally
-        else {
-          return (
-            <TSpan
-              y={y - 40}
-              dx={this.fontSize * 0.07}
-              key={`arc-${i}-slice-${j}`}>
-              {number.charAt(j)}
-            </TSpan>
-          );
-        }
-      })}
-    </Text>
-  );
+  _textRender = (x: number, y: number, number: string, i: number) => {
+    const emojiMatch = number.match(/([\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F700}-\u{1F77F}\u{1F780}-\u{1F7FF}\u{1F800}-\u{1F8FF}\u{1F900}-\u{1F9FF}\u{1FA00}-\u{1FA6F}\u{1FA70}-\u{1FAFF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{2300}-\u{23FF}])/u);
 
+    let mainText = number;
+    let additionalText = '';
+
+    if (emojiMatch) {
+      const emojiIndex = emojiMatch.index!;
+      mainText = number.substring(0, emojiIndex).trim();
+      additionalText = number.substring(emojiIndex).trim();
+    }
+
+    return (
+      <G>
+        <Text
+          x={x}
+          y={y - 60}
+          fill={this.props.options.textColor || '#fff'}
+          textAnchor="middle"
+          fontSize={16}
+          fontFamily="bold"
+          alignmentBaseline="middle"
+        >
+          {mainText}
+        </Text>
+        {additionalText && (
+          <Text
+            x={x}
+            y={y}
+            fill={this.props.options.textColor || '#fff'}
+            textAnchor="middle"
+            fontSize={32}
+            fontFamily="regular"
+            alignmentBaseline="middle"
+          >
+            {additionalText}
+          </Text>
+        )}
+      </G>
+    );
+  };
+  
   _renderSvgWheel = () => {
     return (
       <View style={styles.container}>
@@ -317,8 +341,7 @@ class WheelOfFortune extends Component {
           <Image
             source={
               this.props.options.knobSource
-                ? this.props.options.knobSource
-                : require('../assets/images/knob.png')
+               
             }
             style={{ width: knobSize, height: (knobSize * 100) / 57 }}
           />
@@ -340,7 +363,7 @@ class WheelOfFortune extends Component {
   render() {
     return (
       <View style={styles.container}>
-        <View
+        <TouchableOpacity
           style={{
             position: 'absolute',
             width: width,
@@ -351,7 +374,7 @@ class WheelOfFortune extends Component {
           <Animated.View style={[styles.content, {padding: 10}]}>
             {this._renderSvgWheel()}
           </Animated.View>
-        </View>
+        </TouchableOpacity>
         {this.props.options.playButton ? this._renderTopToPlay() : null}
       </View>
     );
@@ -376,3 +399,4 @@ const styles = StyleSheet.create({
     textShadowRadius: 10,
   },
 });
+
