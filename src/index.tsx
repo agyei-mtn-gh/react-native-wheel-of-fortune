@@ -16,7 +16,7 @@ import { Font } from './global'
 interface WheelOfFortuneProps {
   options: {
     rewards: string[]
-    winner?: number
+    winner?: string
     onRef: (ref: any) => void
     colors?: string[]
     innerRadius?: number
@@ -84,18 +84,23 @@ class WheelOfFortune extends Component<
   }
 
   prepareWheel = () => {
-    this.numberOfSegments = this.props.options.rewards?.length
-    this.angleBySegment = this.oneTurn / this.numberOfSegments
-    this.angleOffset = this.angleBySegment / 2
-    this.winner =
-      this.props.options.winner ??
-      Math.floor(Math.random() * this.numberOfSegments)
+    this.numberOfSegments = this.props.options.rewards?.length;
+    this.angleBySegment = this.oneTurn / this.numberOfSegments;
+    this.angleOffset = this.angleBySegment / 2;
 
-    this._wheelPaths = this.makeWheel()
-    this._angle = new Animated.Value(0)
+    if (this.props?.options?.winner) {
+      this.winner = this.props?.options?.rewards?.indexOf(
+        this.props?.options?.winner,
+      );
+    } else {
+      this.winner = Math.floor(Math.random() * this.numberOfSegments); // Random index
+    }
 
-    this.props.options.onRef(this)
-  }
+    this._wheelPaths = this.makeWheel();
+    this._angle = new Animated.Value(0);
+
+    this.props.options.onRef(this);
+  };
 
   resetWheelState = () => {
     this.setState({

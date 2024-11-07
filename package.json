@@ -1,6 +1,6 @@
 {
   "name": "@madmaxx/react-native-wheel-of-fortune",
-  "version": "1.6.2",
+  "version": "1.6.3",
   "description": "React Native Wheel Of Fortune Component.",
   "main": "index.js",
   "scripts": {
