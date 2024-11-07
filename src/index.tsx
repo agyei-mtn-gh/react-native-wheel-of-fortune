@@ -84,7 +84,7 @@ class WheelOfFortune extends Component<
   }
 
   prepareWheel = () => {
-    this.numberOfSegments = this.props.options.rewards.length
+    this.numberOfSegments = this.props.options.rewards?.length
     this.angleBySegment = this.oneTurn / this.numberOfSegments
     this.angleOffset = this.angleBySegment / 2
     this.winner =
@@ -138,16 +138,18 @@ class WheelOfFortune extends Component<
     const data = Array.from({ length: this.numberOfSegments }).fill(1)
     const arcs = d3Shape.pie()(data)
     const colors = this.props.options.colors || [
-      '#E07026',
-      '#E8C22E',
-      '#ABC937',
-      '#4F991D',
-      '#22AFD3',
-      '#5858D0',
-      '#7B48C8',
-      '#D843B9',
-      '#E23B80',
-      '#D82B2B',
+      '#BBEEFF',
+      '#22F471',
+      '#FBE7A1',
+      '#FE74FE',
+      '#A4CBCB',
+      '#E2725C',
+      '#C7E54A',
+      '#709DC6',
+      '#FFC5C5',
+      '#F1F2F4',
+      '#BBEEFF',
+      '#D48F8F',
     ]
 
     return arcs.map((arc, index) => {
