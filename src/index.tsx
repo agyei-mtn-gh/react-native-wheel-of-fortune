@@ -235,10 +235,10 @@ class WheelOfFortune extends Component<
         <Text
           x={x}
           y={y - 60}
-          fill={this.props.options.textColor || '#fff'}
+          fill={this.props.options.textColor || "#fff"}
           textAnchor="middle"
           fontSize={this.props.options.textSize || 16}
-          fontFamily="bold"
+          fontFamily={this.props.options.fontFamily || "System"}
           alignmentBaseline="middle"
         >
           {mainText}
@@ -247,17 +247,22 @@ class WheelOfFortune extends Component<
           <Text
             x={x}
             y={y}
-            fill={this.props.options.textColor || '#fff'}
+            fill={this.props.options.textColor || "#fff"}
             textAnchor="middle"
             fontSize={this.props.options.additionalTextSize || 30}
-            fontFamily="regular"
+            fontSize={this.props.options.additionalTextSize || 30}
+            fontFamily={
+              this.props.options.additionalFontFamily ||
+              this.props.options.fontFamily ||
+              "System"
+            } // 👈 separate or fallback
             alignmentBaseline="middle"
           >
             {additionalText}
           </Text>
         )}
       </G>
-    )
+    );
   }
 
   _renderSvgWheel = () => {
