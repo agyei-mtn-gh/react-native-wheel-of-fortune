@@ -1,4 +1,4 @@
-import React, { Component } from 'react'
+import React, { Component } from "react";
 import {
   View,
   StyleSheet,
@@ -7,68 +7,68 @@ import {
   TouchableOpacity,
   Image,
   Easing,
-} from 'react-native'
-import * as d3Shape from 'd3-shape'
+} from "react-native";
+import * as d3Shape from "d3-shape";
 
-import Svg, { G, Text, TSpan, Path, Pattern } from 'react-native-svg'
-import { Font } from './global'
+import Svg, { G, Text, TSpan, Path, Pattern } from "react-native-svg";
+import { Font } from "./global";
 
 interface WheelOfFortuneProps {
   options: {
-    rewards: string[]
-    winner?: string
-    onRef: (ref: any) => void
-    colors?: string[]
-    innerRadius?: number
-    backgroundColor?: string
-    borderWidth?: number
-    borderColor?: string
-    textColor?: string
-    duration?: number
-    knobSize?: number
-    knobSource?: any
-    getWinner?: (value: string, index: number) => void
-    playButton: () => JSX.Element
-    textSize: number
-    additionalTextSize: number
-  }
+    rewards: string[];
+    winner?: string;
+    onRef: (ref: any) => void;
+    colors?: string[];
+    innerRadius?: number;
+    backgroundColor?: string;
+    borderWidth?: number;
+    borderColor?: string;
+    textColor?: string;
+    duration?: number;
+    knobSize?: number;
+    knobSource?: any;
+    getWinner?: (value: string, index: number) => void;
+    playButton: () => JSX.Element;
+    textSize: number;
+    additionalTextSize: number;
+  };
 }
 
 interface WheelOfFortuneState {
-  enabled: boolean
-  started: boolean
-  finished: boolean
-  winner: string | null
-  gameScreen: Animated.Value
-  wheelOpacity: Animated.Value
-  imageLeft: Animated.Value
-  imageTop: Animated.Value
+  enabled: boolean;
+  started: boolean;
+  finished: boolean;
+  winner: string | null;
+  gameScreen: Animated.Value;
+  wheelOpacity: Animated.Value;
+  imageLeft: Animated.Value;
+  imageTop: Animated.Value;
 }
 
-const { width, height } = Dimensions.get('screen')
+const { width, height } = Dimensions.get("screen");
 
-const AnimatedSvg = Animated.createAnimatedComponent(Svg)
+const AnimatedSvg = Animated.createAnimatedComponent(Svg);
 
 class WheelOfFortune extends Component<
   WheelOfFortuneProps,
   WheelOfFortuneState
 > {
-  private angle: number = 0
-  private numberOfSegments!: number
-  private fontSize: number = 18
-  private oneTurn: number = 360
-  private angleBySegment!: number
-  private angleOffset!: number
+  private angle: number = 0;
+  private numberOfSegments!: number;
+  private fontSize: number = 18;
+  private oneTurn: number = 360;
+  private angleBySegment!: number;
+  private angleOffset!: number;
   private _wheelPaths: Array<{
-    path: string
-    color: string
-    value: string
-    centroid: [number, number]
-  }> = []
-  private _angle: Animated.Value = new Animated.Value(0)
+    path: string;
+    color: string;
+    value: string;
+    centroid: [number, number];
+  }> = [];
+  private _angle: Animated.Value = new Animated.Value(0);
 
   constructor(props: WheelOfFortuneProps) {
-    super(props)
+    super(props);
     this.state = {
       enabled: false,
       started: false,
@@ -78,9 +78,9 @@ class WheelOfFortune extends Component<
       wheelOpacity: new Animated.Value(1),
       imageLeft: new Animated.Value(width / 2 - 30),
       imageTop: new Animated.Value(height / 2 - 70),
-    }
+    };
 
-    this.prepareWheel()
+    this.prepareWheel();
   }
 
   prepareWheel = () => {
@@ -112,83 +112,83 @@ class WheelOfFortune extends Component<
       wheelOpacity: new Animated.Value(1),
       imageLeft: new Animated.Value(width / 2 - 30),
       imageTop: new Animated.Value(height / 2 - 70),
-    })
-  }
+    });
+  };
 
   _tryAgain = () => {
-    this.prepareWheel()
-    this.resetWheelState()
-    this.angleListener()
-    this._onPress()
-  }
+    this.prepareWheel();
+    this.resetWheelState();
+    this.angleListener();
+    this._onPress();
+  };
 
   angleListener = () => {
     this._angle.addListener((event) => {
       if (this.state.enabled) {
-        this.setState({ enabled: false, finished: false })
+        this.setState({ enabled: false, finished: false });
       }
-      this.angle = event.value
-    })
-  }
+      this.angle = event.value;
+    });
+  };
 
   componentWillUnmount() {
-    this.props.options.onRef(undefined)
+    this.props.options.onRef(undefined);
   }
 
   componentDidMount() {
-    this.angleListener()
+    this.angleListener();
   }
 
   makeWheel = () => {
-    const data = Array.from({ length: this.numberOfSegments }).fill(1)
-    const arcs = d3Shape.pie()(data)
+    const data = Array.from({ length: this.numberOfSegments }).fill(1);
+    const arcs = d3Shape.pie()(data);
     const colors = this.props.options.colors || [
-      '#BBEEFF',
-      '#22F471',
-      '#FBE7A1',
-      '#FE74FE',
-      '#A4CBCB',
-      '#E2725C',
-      '#C7E54A',
-      '#709DC6',
-      '#FFC5C5',
-      '#F1F2F4',
-      '#BBEEFF',
-      '#D48F8F',
-    ]
+      "#BBEEFF",
+      "#22F471",
+      "#FBE7A1",
+      "#FE74FE",
+      "#A4CBCB",
+      "#E2725C",
+      "#C7E54A",
+      "#709DC6",
+      "#FFC5C5",
+      "#F1F2F4",
+      "#BBEEFF",
+      "#D48F8F",
+    ];
 
     return arcs.map((arc, index) => {
       const instance = d3Shape
         .arc()
         .padAngle(0.01)
         .outerRadius(width / 2)
-        .innerRadius(this.props.options.innerRadius || 100)
+        .innerRadius(this.props.options.innerRadius || 100);
       return {
         path: instance(arc)!,
         color: colors[index % colors.length],
         value: this.props.options.rewards[index],
         centroid: instance.centroid(arc),
-      }
-    })
-  }
+      };
+    });
+  };
 
   _getWinnerIndex = () => {
-    const deg = Math.abs(Math.round(this.angle % this.oneTurn))
+    const deg = Math.abs(Math.round(this.angle % this.oneTurn));
     if (this.angle < 0) {
-      return Math.floor(deg / this.angleBySegment)
+      return Math.floor(deg / this.angleBySegment);
     }
     return (
       (this.numberOfSegments - Math.floor(deg / this.angleBySegment)) %
       this.numberOfSegments
-    )
-  }
+    );
+  };
 
   _onPress = () => {
-    if (this.state.started || this.state.finished) return
+    if (this.state.started || this.state.finished) return;
 
-    const duration = this.props.options.duration || 10000
+    const duration = this.props.options.duration || 10000;
 
-    this.setState({ started: true, finished: false })
+    this.setState({ started: true, finished: false });
 
     Animated.timing(this._angle, {
       toValue:
@@ -199,71 +199,82 @@ class WheelOfFortune extends Component<
       easing: Easing.out(Easing.quad),
       useNativeDriver: true,
     }).start(() => {
-      const winnerIndex = this._getWinnerIndex()
+      const winnerIndex = this._getWinnerIndex();
       this.setState({
         finished: true,
         winner: this._wheelPaths[winnerIndex].value,
-      })
+      });
 
       if (this.props.options.getWinner) {
         this.props.options.getWinner(
           this._wheelPaths[winnerIndex].value,
           winnerIndex,
-        )
+        );
       }
 
-      this.setState({ started: false })
-    })
-  }
+      this.setState({ started: false });
+    });
+  };
 
   _textRender = (x: number, y: number, number: string, i: number) => {
     const emojiMatch = number.match(
       /([\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F700}-\u{1F77F}\u{1F780}-\u{1F7FF}\u{1F800}-\u{1F8FF}\u{1F900}-\u{1F9FF}\u{1FA00}-\u{1FA6F}\u{1FA70}-\u{1FAFF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{2300}-\u{23FF}])/u,
-    )
+    );
 
-    let mainText = number
-    let additionalText = ''
+    let mainText = number;
+    let additionalText = "";
 
     if (emojiMatch) {
-      const emojiIndex = emojiMatch.index!
-      mainText = number.substring(0, emojiIndex).trim()
-      additionalText = number.substring(emojiIndex).trim()
+      const emojiIndex = emojiMatch.index!;
+      mainText = number.substring(0, emojiIndex).trim();
+      additionalText = number.substring(emojiIndex).trim();
     }
 
+    const r = width / 2 - 20;
+    const midAngle =
+      (i * this.oneTurn) / this.numberOfSegments + this.angleOffset;
+
+    const innerR = this.props.options.innerRadius || 100;
+    const textStartY = -(innerR + 50);
+    const emojiY = -(r * 0.85);
+
     return (
-      <G>
+      <G rotation={midAngle} origin={`0, 0`}>
+        {/* Main label: starts near center, reads outward */}
         <Text
-          x={x}
-          y={y - 60}
+          x={0}
+          y={textStartY}
           fill={this.props.options.textColor || "#fff"}
-          textAnchor="middle"
-          fontSize={this.props.options.textSize || 16}
-          fontFamily={this.props.options.fontFamily || "System"}
+          textAnchor="start" // ← anchor at inner end, text flows outward
+          fontSize={this.props.options.additionalTextSize || 18}
+          fontFamily={
+            this.props.options.additionalFontFamily ||
+            this.props.options.fontFamily ||
+            "System"
+          }
           alignmentBaseline="middle"
+          rotation={270} // ← flip so text reads outward, not inward
+          origin={`0, ${textStartY}`}
         >
           {mainText}
         </Text>
+        {/* Emoji near the outer edge */}
         {additionalText && (
           <Text
-            x={x}
-            y={y}
+            x={0}
+            y={emojiY}
             fill={this.props.options.textColor || "#fff"}
             textAnchor="middle"
-            fontSize={this.props.options.additionalTextSize || 30}
-            fontSize={this.props.options.additionalTextSize || 30}
-            fontFamily={
-              this.props.options.additionalFontFamily ||
-              this.props.options.fontFamily ||
-              "System"
-            } // 👈 separate or fallback
-            alignmentBaseline="middle"
+            fontSize={this.props.options.textSize || 22}
+            fontFamily={this.props.options.fontFamily || "System"}
+            alignmentBaseline="text-after-edge"
           >
             {additionalText}
           </Text>
         )}
       </G>
     );
-  }
+  };
 
   _renderSvgWheel = () => {
     return (
@@ -271,8 +282,8 @@ class WheelOfFortune extends Component<
         {this._renderKnob()}
         <Animated.View
           style={{
-            alignItems: 'center',
-            justifyContent: 'center',
+            alignItems: "center",
+            justifyContent: "center",
             transform: [
               {
                 rotate: this._angle.interpolate({
@@ -287,7 +298,7 @@ class WheelOfFortune extends Component<
             ],
             backgroundColor: this.props.options.backgroundColor
               ? this.props.options.backgroundColor
-              : '#fff',
+              : "#fff",
             width: width - 20,
             height: width - 20,
             borderRadius: (width - 20) / 2,
@@ -296,7 +307,7 @@ class WheelOfFortune extends Component<
               : 2,
             borderColor: this.props.options.borderColor
               ? this.props.options.borderColor
-              : '#fff',
+              : "#fff",
             opacity: this.state.wheelOpacity,
           }}
         >
@@ -311,35 +322,27 @@ class WheelOfFortune extends Component<
           >
             <G y={width / 2} x={width / 2}>
               {this._wheelPaths.map((arc, i) => {
-                const [x, y] = arc.centroid
-                const number = arc.value.toString()
+                const [x, y] = arc.centroid;
+                const number = arc.value.toString();
 
                 return (
                   <G key={`arc-${i}`}>
                     <Path d={arc.path} strokeWidth={2} fill={arc.color} />
-                    <G
-                      rotation={
-                        (i * this.oneTurn) / this.numberOfSegments +
-                        this.angleOffset
-                      }
-                      origin={`${x}, ${y}`}
-                    >
-                      {this._textRender(x, y, number, i)}
-                    </G>
+                    {this._textRender(x, y, number, i)}
                   </G>
-                )
+                );
               })}
             </G>
           </AnimatedSvg>
         </Animated.View>
       </View>
-    )
-  }
+    );
+  };
 
   _renderKnob = () => {
     const knobSize = this.props.options.knobSize
       ? this.props.options.knobSize
-      : 20
+      : 20;
     // [0, this.numberOfSegments]
     const YOLO = Animated.modulo(
       Animated.divide(
@@ -350,14 +353,14 @@ class WheelOfFortune extends Component<
         new Animated.Value(this.angleBySegment),
       ),
       1,
-    )
+    );
 
     return (
       <Animated.View
         style={{
           width: knobSize,
           height: knobSize * 2,
-          justifyContent: 'flex-end',
+          justifyContent: "flex-end",
           zIndex: 1,
           opacity: this.state.wheelOpacity,
           transform: [
@@ -365,12 +368,12 @@ class WheelOfFortune extends Component<
               rotate: YOLO.interpolate({
                 inputRange: [-1, -0.5, -0.0001, 0.0001, 0.5, 1],
                 outputRange: [
-                  '0deg',
-                  '0deg',
-                  '35deg',
-                  '-35deg',
-                  '0deg',
-                  '0deg',
+                  "0deg",
+                  "0deg",
+                  "35deg",
+                  "-35deg",
+                  "0deg",
+                  "0deg",
                 ],
               }),
             },
@@ -391,8 +394,8 @@ class WheelOfFortune extends Component<
           />
         </Svg>
       </Animated.View>
-    )
-  }
+    );
+  };
 
   _renderTopToPlay() {
     if (this.state.started == false) {
@@ -400,7 +403,7 @@ class WheelOfFortune extends Component<
         <TouchableOpacity onPress={() => this._onPress()}>
           {this.props.options.playButton()}
         </TouchableOpacity>
-      )
+      );
     }
   }
 
@@ -409,11 +412,11 @@ class WheelOfFortune extends Component<
       <View style={styles.container}>
         <TouchableOpacity
           style={{
-            position: 'absolute',
+            position: "absolute",
             width: width,
             height: height / 2,
-            justifyContent: 'center',
-            alignItems: 'center',
+            justifyContent: "center",
+            alignItems: "center",
           }}
         >
           <Animated.View style={[styles.content, { padding: 10 }]}>
@@ -422,25 +425,25 @@ class WheelOfFortune extends Component<
         </TouchableOpacity>
         {this.props.options.playButton ? this._renderTopToPlay() : null}
       </View>
-    )
+    );
   }
 }
 
-export default WheelOfFortune
+export default WheelOfFortune;
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   content: {},
   startText: {
     fontSize: 50,
-    color: '#fff',
-    fontWeight: 'bold',
-    textShadowColor: 'rgba(0, 0, 0, 0.4)',
+    color: "#fff",
+    fontWeight: "bold",
+    textShadowColor: "rgba(0, 0, 0, 0.4)",
     textShadowOffset: { width: -1, height: 1 },
     textShadowRadius: 10,
   },
-})
+});
